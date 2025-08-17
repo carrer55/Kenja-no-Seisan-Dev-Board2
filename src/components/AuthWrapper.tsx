@@ -16,13 +16,17 @@ function AuthWrapper() {
   useEffect(() => {
     const checkAuth = async () => {
       try {
-        // URLハッシュをチェック（Supabaseはハッシュフラグメントを使用）
+        // URLパラメータをチェック（クエリパラメータとハッシュフラグメント両方）
+        const urlParams = new URLSearchParams(window.location.search);
         const hashParams = new URLSearchParams(window.location.hash.substring(1));
-        const accessToken = hashParams.get('access_token');
-        const refreshToken = hashParams.get('refresh_token');
-        const type = hashParams.get('type');
-        const error = hashParams.get('error');
-        const errorDescription = hashParams.get('error_description');
+        
+        // クエリパラメータから取得を試行
+        let accessToken = urlParams.get('access_token') || hashParams.get('access_token');
+        let refreshToken = urlParams.get('refresh_token') || hashParams.get('refresh_token');
+        let type = urlParams.get('type') || hashParams.get('type');
+        let error = urlParams.get('error') || hashParams.get('error');
+        let errorDescription = urlParams.get('error_description') || hashParams.get('error_description');
+        let code = urlParams.get('code');
 
         // エラーがある場合の処理
         if (error) {
@@ -32,8 +36,52 @@ function AuthWrapper() {
           return;
         }
 
-        // メール確認の場合
-        if (accessToken && refreshToken && type === 'signup') {
+        // 認証コードがある場合（PKCE flow）
+        if (code) {
+          try {
+            const { data, error } = await supabase.auth.exchangeCodeForSession(code);
+            
+            if (error) {
+              console.error('Code exchange error:', error);
+              setCurrentView('login');
+              setIsLoading(false);
+              return;
+            }
+
+            if (data.user && data.user.email_confirmed_at) {
+              // URLパラメータをクリア
+              window.history.replaceState({}, document.title, window.location.pathname);
+              
+              // プロフィールをチェック
+              const { data: profile, error: profileError } = await supabase
+                .from('profiles')
+                .select('*')
+                .eq('id', data.user.id)
+                .single();
+
+              if (profileError || !profile) {
+                // プロフィールが存在しない場合は本登録へ
+                setCurrentView('onboarding');
+              } else if (!profile.onboarding_completed) {
+                // 本登録が未完了の場合
+                setCurrentView('onboarding');
+              } else {
+                // ログイン成功
+                setIsAuthenticated(true);
+              }
+              setIsLoading(false);
+              return;
+            }
+          } catch (error) {
+            console.error('Code exchange error:', error);
+            setCurrentView('login');
+            setIsLoading(false);
+            return;
+          }
+        }
+
+        // メール確認の場合（従来のフロー）
+        if (accessToken && refreshToken) {
           try {
             const { data, error } = await supabase.auth.setSession({
               access_token: accessToken,
@@ -51,8 +99,23 @@ function AuthWrapper() {
               // URLハッシュをクリア
               window.history.replaceState({}, document.title, window.location.pathname);
               
-              // メール確認完了画面に遷移
-              setCurrentView('email-confirmed');
+              // プロフィールをチェック
+              const { data: profile, error: profileError } = await supabase
+                .from('profiles')
+                .select('*')
+                .eq('id', data.user.id)
+                .single();
+
+              if (profileError || !profile) {
+                // プロフィールが存在しない場合は本登録へ
+                setCurrentView('onboarding');
+              } else if (!profile.onboarding_completed) {
+                // 本登録が未完了の場合
+                setCurrentView('onboarding');
+              } else {
+                // ログイン成功
+                setIsAuthenticated(true);
+              }
               setIsLoading(false);
               return;
             }
@@ -75,7 +138,7 @@ function AuthWrapper() {
               .eq('id', session.user.id)
               .single();
 
-            if (profileError) {
+            if (profileError || !profile) {
               console.error('Profile fetch error:', profileError);
               setCurrentView('onboarding');
             } else if (profile && !profile.onboarding_completed) {
@@ -101,7 +164,7 @@ function AuthWrapper() {
 
     const { data: { subscription } } = supabase.auth.onAuthStateChange(
       async (event, session) => {
-        console.log('Auth state change:', event, session?.user?.email_confirmed_at);
+        console.log('Auth state change:', event, session?.user?.id, session?.user?.email_confirmed_at);
         
         if (event === 'SIGNED_IN' && session?.user) {
           if (session.user.email_confirmed_at) {
@@ -111,7 +174,7 @@ function AuthWrapper() {
               .eq('id', session.user.id)
               .single();
 
-            if (profile && !profile.onboarding_completed) {
+            if (!profile || !profile.onboarding_completed) {
               setCurrentView('onboarding');
             } else {
               setIsAuthenticated(true);

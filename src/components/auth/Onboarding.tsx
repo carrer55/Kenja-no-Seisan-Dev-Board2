@@ -40,7 +40,7 @@ function Onboarding({ onNavigate, onComplete }: OnboardingProps) {
       // プロフィール情報を更新
       const { error: updateError } = await supabase
         .from('profiles')
-        .upsert({
+        .upsert([{
           id: user.id,
           full_name: formData.fullName,
           company_name: formData.companyName,
@@ -48,6 +48,8 @@ function Onboarding({ onNavigate, onComplete }: OnboardingProps) {
           phone: formData.phone,
           onboarding_completed: true,
           updated_at: new Date().toISOString()
+        }], {
+          onConflict: 'id'
         });
 
       if (updateError) {
@@ -59,6 +61,7 @@ function Onboarding({ onNavigate, onComplete }: OnboardingProps) {
       // 登録完了
       onComplete();
     } catch (err) {
+      console.error('Onboarding error:', err);
       setError('登録に失敗しました。もう一度お試しください。');
     } finally {
       setIsLoading(false);
