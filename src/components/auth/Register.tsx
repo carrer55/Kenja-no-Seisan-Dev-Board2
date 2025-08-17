@@ -34,44 +34,7 @@ function Register({ onNavigate }: RegisterProps) {
     }
 
     try {
-      // 既存ユーザーをチェック
-      const { data: existingUser } = await supabase.auth.admin.getUserByEmail(email);
-      
-      if (existingUser.user) {
-        // 既存ユーザーの場合、プロフィールをチェック
-        const { data: profile } = await supabase
-          .from('profiles')
-          .select('onboarding_completed')
-          .eq('id', existingUser.user.id)
-          .single();
-        
-        if (profile && profile.onboarding_completed) {
-          setError('このメールアドレスは既に登録済みです。ログイン画面からログインしてください。');
-          setIsLoading(false);
-          return;
-        }
-        
-        // 本登録未完了の場合は確認メールを再送
-        const { error: resendError } = await supabase.auth.resend({
-          type: 'signup',
-          email: email,
-          options: {
-            emailRedirectTo: `${window.location.origin}/#/email-confirmed`
-          }
-        });
-        
-        if (resendError) {
-          console.error('Resend error:', resendError);
-          setError('確認メールの再送に失敗しました。しばらく時間をおいてから再度お試しください。');
-          return;
-        }
-        
-        // 確認メール再送成功
-        onNavigate('register-success');
-        return;
-      }
-      
-      // 新規ユーザーの場合は通常の登録処理
+      // ユーザー登録を試行
       const { data, error } = await supabase.auth.signUp({
         email,
         password,
@@ -82,7 +45,6 @@ function Register({ onNavigate }: RegisterProps) {
 
       if (error) {
         if (error.message.includes('User already registered')) {
-          setError('このメールアドレスは既に登録済みです。確認メールを再送しますか？');
           // 確認メール再送処理
           const { error: resendError } = await supabase.auth.resend({
             type: 'signup',
@@ -92,7 +54,10 @@ function Register({ onNavigate }: RegisterProps) {
             }
           });
           
-          if (!resendError) {
+          if (resendError) {
+            console.error('Resend error:', resendError);
+            setError('確認メールの再送に失敗しました。しばらく時間をおいてから再度お試しください。');
+          } else {
             onNavigate('register-success');
           }
           return;
