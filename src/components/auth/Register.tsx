@@ -1,4 +1,7 @@
 import React, { useState } from 'react';
+import { useForm } from 'react-hook-form';
+import { zodResolver } from '@hookform/resolvers/zod';
+import { z } from 'zod';
 import { Mail, Lock, Eye, EyeOff, UserPlus, ArrowLeft } from 'lucide-react';
 import { supabase } from '../../lib/supabase';
 
@@ -6,42 +9,43 @@ interface RegisterProps {
   onNavigate: (view: string) => void;
 }
 
+// Zodスキーマ定義
+const registerSchema = z.object({
+  email: z
+    .string()
+    .min(1, 'メールアドレスは必須です')
+    .email('正しいメールアドレスを入力してください'),
+  password: z
+    .string()
+    .min(8, 'パスワードは8文字以上で入力してください')
+});
+
+type RegisterFormData = z.infer<typeof registerSchema>;
+
 function Register({ onNavigate }: RegisterProps) {
-  const [email, setEmail] = useState('');
-  const [password, setPassword] = useState('');
-  const [confirmPassword, setConfirmPassword] = useState('');
   const [showPassword, setShowPassword] = useState(false);
-  const [showConfirmPassword, setShowConfirmPassword] = useState(false);
   const [isLoading, setIsLoading] = useState(false);
   const [error, setError] = useState('');
 
-  const handleRegister = async (e: React.FormEvent) => {
-    e.preventDefault();
+  const {
+    register,
+    handleSubmit,
+    formState: { errors, isValid }
+  } = useForm<RegisterFormData>({
+    resolver: zodResolver(registerSchema),
+    mode: 'onChange'
+  });
+
+  const onSubmit = async (data: RegisterFormData) => {
     setIsLoading(true);
     setError('');
 
-    // パスワード確認
-    if (password !== confirmPassword) {
-      setError('パスワードが一致しません');
-      setIsLoading(false);
-      return;
-    }
-
-    if (password.length < 8) {
-      setError('パスワードは8文字以上で入力してください');
-      setIsLoading(false);
-      return;
-    }
-
     try {
-      const { data, error } = await supabase.auth.signUp({
-        email,
-        password,
+      const { error } = await supabase.auth.signUp({
+        email: data.email,
+        password: data.password,
         options: {
-          emailRedirectTo: `${window.location.origin}/#/email-confirmed`,
-          data: {
-            email_confirm: true
-          }
+          emailRedirectTo: `${import.meta.env.VITE_SITE_URL || "http://localhost:3000"}/auth/callback`
         }
       });
 
@@ -51,19 +55,18 @@ function Register({ onNavigate }: RegisterProps) {
           try {
             const { error: resendError } = await supabase.auth.resend({
               type: 'signup',
-              email: email,
+              email: data.email,
               options: {
-                emailRedirectTo: `${window.location.origin}/#/email-confirmed`
+                emailRedirectTo: `${import.meta.env.VITE_SITE_URL || "http://localhost:3000"}/auth/callback`
               }
             });
             
             if (resendError) {
               console.error('Resend error:', resendError);
-              // 再送エラーでも成功画面に遷移（メールが既に送信済みの可能性）
-              onNavigate('register-success');
-            } else {
-              onNavigate('register-success');
             }
+            
+            // 再送成功・失敗に関わらず成功画面に遷移
+            onNavigate('register-success');
             return;
           } catch (resendErr) {
             console.error('Resend catch error:', resendErr);
@@ -76,10 +79,8 @@ function Register({ onNavigate }: RegisterProps) {
         return;
       }
 
-      if (data.user) {
-        // 仮登録完了画面へ
-        onNavigate('register-success');
-      }
+      // 仮登録完了画面へ
+      onNavigate('register-success');
     } catch (err) {
       console.error('Registration error:', err);
       setError('登録に失敗しました。もう一度お試しください。');
@@ -106,7 +107,7 @@ function Register({ onNavigate }: RegisterProps) {
 
           {/* 登録フォーム */}
           <div className="backdrop-blur-xl bg-white/20 rounded-xl p-8 border border-white/30 shadow-2xl">
-            <form onSubmit={handleRegister} className="space-y-6">
+            <form onSubmit={handleSubmit(onSubmit)} className="space-y-6">
               {error && (
                 <div className="bg-red-50/50 border border-red-200/50 rounded-lg p-4">
                   <p className="text-red-700 text-sm">{error}</p>
@@ -121,13 +122,18 @@ function Register({ onNavigate }: RegisterProps) {
                   <Mail className="absolute left-3 top-1/2 transform -translate-y-1/2 text-slate-400 w-5 h-5" />
                   <input
                     type="email"
-                    value={email}
-                    onChange={(e) => setEmail(e.target.value)}
-                    className="w-full pl-10 pr-4 py-3 bg-white/50 border border-white/40 rounded-lg text-slate-700 placeholder-slate-500 focus:outline-none focus:ring-2 focus:ring-emerald-400 backdrop-blur-xl"
+                    {...register('email')}
+                    className={`w-full pl-10 pr-4 py-3 bg-white/50 border rounded-lg text-slate-700 placeholder-slate-500 focus:outline-none focus:ring-2 backdrop-blur-xl ${
+                      errors.email 
+                        ? 'border-red-400 focus:ring-red-400' 
+                        : 'border-white/40 focus:ring-emerald-400'
+                    }`}
                     placeholder="your@email.com"
-                    required
                   />
                 </div>
+                {errors.email && (
+                  <p className="text-red-600 text-sm mt-1">{errors.email.message}</p>
+                )}
               </div>
 
               <div>
@@ -138,11 +144,13 @@ function Register({ onNavigate }: RegisterProps) {
                   <Lock className="absolute left-3 top-1/2 transform -translate-y-1/2 text-slate-400 w-5 h-5" />
                   <input
                     type={showPassword ? 'text' : 'password'}
-                    value={password}
-                    onChange={(e) => setPassword(e.target.value)}
-                    className="w-full pl-10 pr-12 py-3 bg-white/50 border border-white/40 rounded-lg text-slate-700 placeholder-slate-500 focus:outline-none focus:ring-2 focus:ring-emerald-400 backdrop-blur-xl"
+                    {...register('password')}
+                    className={`w-full pl-10 pr-12 py-3 bg-white/50 border rounded-lg text-slate-700 placeholder-slate-500 focus:outline-none focus:ring-2 backdrop-blur-xl ${
+                      errors.password 
+                        ? 'border-red-400 focus:ring-red-400' 
+                        : 'border-white/40 focus:ring-emerald-400'
+                    }`}
                     placeholder="8文字以上のパスワード"
-                    required
                   />
                   <button
                     type="button"
@@ -152,35 +160,14 @@ function Register({ onNavigate }: RegisterProps) {
                     {showPassword ? <EyeOff className="w-5 h-5" /> : <Eye className="w-5 h-5" />}
                   </button>
                 </div>
-              </div>
-
-              <div>
-                <label className="block text-sm font-medium text-slate-700 mb-2">
-                  パスワード確認
-                </label>
-                <div className="relative">
-                  <Lock className="absolute left-3 top-1/2 transform -translate-y-1/2 text-slate-400 w-5 h-5" />
-                  <input
-                    type={showConfirmPassword ? 'text' : 'password'}
-                    value={confirmPassword}
-                    onChange={(e) => setConfirmPassword(e.target.value)}
-                    className="w-full pl-10 pr-12 py-3 bg-white/50 border border-white/40 rounded-lg text-slate-700 placeholder-slate-500 focus:outline-none focus:ring-2 focus:ring-emerald-400 backdrop-blur-xl"
-                    placeholder="パスワードを再入力"
-                    required
-                  />
-                  <button
-                    type="button"
-                    onClick={() => setShowConfirmPassword(!showConfirmPassword)}
-                    className="absolute right-3 top-1/2 transform -translate-y-1/2 text-slate-400 hover:text-slate-600"
-                  >
-                    {showConfirmPassword ? <EyeOff className="w-5 h-5" /> : <Eye className="w-5 h-5" />}
-                  </button>
-                </div>
+                {errors.password && (
+                  <p className="text-red-600 text-sm mt-1">{errors.password.message}</p>
+                )}
               </div>
 
               <button
                 type="submit"
-                disabled={isLoading}
+                disabled={isLoading || !isValid}
                 className="w-full flex items-center justify-center space-x-2 px-6 py-3 bg-gradient-to-r from-emerald-600 to-emerald-800 hover:from-emerald-700 hover:to-emerald-900 text-white rounded-lg font-medium shadow-xl hover:shadow-2xl transition-all duration-200 transform hover:scale-105 disabled:opacity-50 disabled:cursor-not-allowed"
               >
                 <UserPlus className="w-5 h-5" />
@@ -204,6 +191,9 @@ function Register({ onNavigate }: RegisterProps) {
           <div className="mt-6 text-center">
             <p className="text-slate-500 text-xs">
               登録することで、利用規約とプライバシーポリシーに同意したものとみなされます。
+            </p>
+            <p className="text-slate-500 text-xs mt-2">
+              既に仮登録済みの場合でも、本登録未完了なら確認メールを再送します。
             </p>
           </div>
         </div>
