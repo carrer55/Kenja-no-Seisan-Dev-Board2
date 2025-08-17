@@ -78,8 +78,12 @@ function Login({ onNavigate, onLoginSuccess }: LoginProps) {
         <div className="max-w-md w-full">
           {/* ロゴ */}
           <div className="text-center mb-8">
-            <div className="w-32 h-32 mx-auto mb-6 rounded-full bg-gradient-to-br from-navy-600 to-navy-800 flex items-center justify-center shadow-2xl">
-              <LogIn className="w-16 h-16 text-white" />
+            <div className="w-32 h-32 mx-auto mb-6 flex items-center justify-center">
+              <img 
+                src="/賢者の精算Logo2_Transparent_NoBuffer copy.png" 
+                alt="賢者の精算ロゴ" 
+                className="w-full h-full object-contain"
+              />
             </div>
             <h1 className="text-3xl font-bold text-slate-800 mb-2">賢者の精算</h1>
             <p className="text-slate-600">アカウントにログインしてください</p>
