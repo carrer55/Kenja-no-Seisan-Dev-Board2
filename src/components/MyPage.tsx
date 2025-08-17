@@ -35,6 +35,7 @@ function MyPage({ onNavigate }: MyPageProps) {
   const [showPasswordChange, setShowPasswordChange] = useState(false);
   const [showCurrentPassword, setShowCurrentPassword] = useState(false);
   const [showNewPassword, setShowNewPassword] = useState(false);
+  const [showPasswordModal, setShowPasswordModal] = useState(false);
   
   const [userProfile, setUserProfile] = useState<UserProfile>({
     name: '山田太郎',
@@ -75,17 +76,7 @@ function MyPage({ onNavigate }: MyPageProps) {
   };
 
   const handlePasswordChange = () => {
-    if (passwordData.new !== passwordData.confirm) {
-      alert('新しいパスワードが一致しません');
-      return;
-    }
-    if (passwordData.new.length < 8) {
-      alert('パスワードは8文字以上で入力してください');
-      return;
-    }
-    alert('パスワードが変更されました');
-    setPasswordData({ current: '', new: '', confirm: '' });
-    setShowPasswordChange(false);
+    setShowPasswordModal(true);
   };
 
   const handleNotificationSave = () => {
@@ -181,71 +172,12 @@ function MyPage({ onNavigate }: MyPageProps) {
           <button
             onClick={() => setShowPasswordChange(!showPasswordChange)}
             className="flex items-center space-x-2 px-4 py-2 bg-gradient-to-r from-slate-600 to-slate-800 text-white rounded-lg font-medium hover:from-slate-700 hover:to-slate-900 transition-all duration-200"
-            onClick={() => handlePlanChange('Enterprise')}
           >
             <Edit className="w-4 h-4" />
-            <span>{showPasswordChange ? 'キャンセル' : '変更'}</span>
+            <span>パスワード変更</span>
           </button>
         </div>
 
-        {showPasswordChange && (
-          <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
-            <div>
-              <label className="block text-sm font-medium text-slate-700 mb-2">現在のパスワード</label>
-              <div className="relative">
-                <input
-                  type={showCurrentPassword ? 'text' : 'password'}
-                  value={passwordData.current}
-                  onChange={(e) => setPasswordData(prev => ({ ...prev, current: e.target.value }))}
-                  className="w-full px-4 py-3 pr-12 bg-white/50 border border-white/40 rounded-lg text-slate-700 focus:outline-none focus:ring-2 focus:ring-navy-400 backdrop-blur-xl"
-                />
-                <button
-                  type="button"
-                  onClick={() => setShowCurrentPassword(!showCurrentPassword)}
-                  className="absolute right-3 top-1/2 transform -translate-y-1/2 text-slate-500 hover:text-slate-700"
-                >
-                  {showCurrentPassword ? <EyeOff className="w-5 h-5" /> : <Eye className="w-5 h-5" />}
-                </button>
-              </div>
-            </div>
-            <div>
-              <label className="block text-sm font-medium text-slate-700 mb-2">新しいパスワード</label>
-              <div className="relative">
-                <input
-                  type={showNewPassword ? 'text' : 'password'}
-                  value={passwordData.new}
-                  onChange={(e) => setPasswordData(prev => ({ ...prev, new: e.target.value }))}
-                  className="w-full px-4 py-3 pr-12 bg-white/50 border border-white/40 rounded-lg text-slate-700 focus:outline-none focus:ring-2 focus:ring-navy-400 backdrop-blur-xl"
-                />
-                <button
-                  type="button"
-                  onClick={() => setShowNewPassword(!showNewPassword)}
-                  className="absolute right-3 top-1/2 transform -translate-y-1/2 text-slate-500 hover:text-slate-700"
-                >
-                  {showNewPassword ? <EyeOff className="w-5 h-5" /> : <Eye className="w-5 h-5" />}
-                </button>
-              </div>
-            </div>
-            <div>
-              <label className="block text-sm font-medium text-slate-700 mb-2">パスワード確認</label>
-              <input
-                type="password"
-                value={passwordData.confirm}
-                onChange={(e) => setPasswordData(prev => ({ ...prev, confirm: e.target.value }))}
-                className="w-full px-4 py-3 bg-white/50 border border-white/40 rounded-lg text-slate-700 focus:outline-none focus:ring-2 focus:ring-navy-400 backdrop-blur-xl"
-              />
-            </div>
-            <div className="md:col-span-3">
-              <button
-                onClick={handlePasswordChange}
-                className="flex items-center space-x-2 px-6 py-3 bg-gradient-to-r from-navy-700 to-navy-900 hover:from-navy-800 hover:to-navy-950 text-white rounded-lg font-medium transition-all duration-200"
-              >
-                <Save className="w-5 h-5" />
-                <span>パスワードを変更</span>
-              </button>
-            </div>
-          </div>
-        )}
       </div>
 
       <div className="flex justify-end">
@@ -703,6 +635,36 @@ function MyPage({ onNavigate }: MyPageProps) {
               </div>
             </div>
           </div>
+
+          {/* パスワード変更モーダル */}
+          {showPasswordModal && (
+            <div className="fixed inset-0 bg-black/50 flex items-center justify-center z-50 p-4">
+              <div className="bg-white rounded-xl p-6 max-w-md w-full">
+                <h3 className="text-lg font-semibold text-slate-800 mb-4">パスワード変更</h3>
+                <p className="text-slate-600 mb-6">
+                  セキュリティのため、パスワード変更はメール経由で行います。
+                  登録済みのメールアドレスにパスワードリセット用のリンクを送信いたします。
+                </p>
+                <div className="flex justify-end space-x-3">
+                  <button
+                    onClick={() => setShowPasswordModal(false)}
+                    className="px-4 py-2 text-slate-600 hover:text-slate-800 transition-colors"
+                  >
+                    キャンセル
+                  </button>
+                  <button
+                    onClick={() => {
+                      setShowPasswordModal(false);
+                      onNavigate('password-reset');
+                    }}
+                    className="px-4 py-2 bg-navy-600 text-white rounded-lg hover:bg-navy-700 transition-colors"
+                  >
+                    リセットメールを送信
+                  </button>
+                </div>
+              </div>
+            </div>
+          )}
         </div>
       </div>
     </div>

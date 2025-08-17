@@ -1,9 +1,9 @@
 import React from 'react';
-import Dashboard from './components/Dashboard';
+import AuthWrapper from './components/AuthWrapper';
 import './index.css';
 
 function App() {
-  return <Dashboard />;
+  return <AuthWrapper />;
 }
 
 export default App;
