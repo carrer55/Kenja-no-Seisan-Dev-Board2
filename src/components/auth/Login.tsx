@@ -85,7 +85,6 @@ function Login({ onNavigate, onLoginSuccess }: LoginProps) {
                 className="w-full h-full object-contain"
               />
             </div>
-            <h1 className="text-3xl font-bold text-slate-800 mb-2">賢者の精算</h1>
             <p className="text-slate-600">アカウントにログインしてください</p>
           </div>
 
