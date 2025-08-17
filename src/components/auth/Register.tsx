@@ -132,10 +132,13 @@ function Register({ onNavigate }: RegisterProps) {
         <div className="max-w-md w-full">
           {/* ヘッダー */}
           <div className="text-center mb-8">
-            <div className="w-32 h-32 mx-auto mb-6 rounded-full bg-gradient-to-br from-emerald-600 to-emerald-800 flex items-center justify-center shadow-2xl">
-              <UserPlus className="w-16 h-16 text-white" />
+            <div className="w-full h-24 mx-auto mb-6 flex items-center justify-center">
+              <img 
+                src="/賢者の精算Logo2_Transparent_NoBuffer copy.png" 
+                alt="賢者の精算ロゴ" 
+                className="h-full object-contain"
+              />
             </div>
-            <h1 className="text-3xl font-bold text-slate-800 mb-2">新規登録</h1>
             <p className="text-slate-600">賢者の精算へようこそ</p>
           </div>
 
