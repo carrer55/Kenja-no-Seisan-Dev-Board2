@@ -77,3 +77,4 @@ export interface AuthUser {
   email: string
   email_confirmed_at: string | null
   created_at: string
+}
