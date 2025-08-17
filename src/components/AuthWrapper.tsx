@@ -14,6 +14,44 @@ function AuthWrapper() {
   const [isLoading, setIsLoading] = useState(true);
 
   useEffect(() => {
+    // URLパラメータをチェックしてメール確認を処理
+    const handleEmailConfirmation = async () => {
+      const urlParams = new URLSearchParams(window.location.search);
+      const accessToken = urlParams.get('access_token');
+      const refreshToken = urlParams.get('refresh_token');
+      const type = urlParams.get('type');
+
+      if (accessToken && refreshToken && type === 'signup') {
+        try {
+          // Supabaseセッションを設定
+          const { data, error } = await supabase.auth.setSession({
+            access_token: accessToken,
+            refresh_token: refreshToken
+          });
+
+          if (error) {
+            console.error('Session setting error:', error);
+            return;
+          }
+
+          if (data.user) {
+            // URLパラメータをクリア
+            window.history.replaceState({}, document.title, window.location.pathname);
+            
+            // メール確認完了画面に遷移
+            setCurrentView('email-confirmed');
+            setIsLoading(false);
+            return;
+          }
+        } catch (error) {
+          console.error('Email confirmation error:', error);
+        }
+      }
+
+      // 通常の認証チェック
+      await checkAuth();
+    };
+
     // 初期認証状態をチェック
     const checkAuth = async () => {
       try {
@@ -40,11 +78,26 @@ function AuthWrapper() {
       }
     };
 
-    checkAuth();
+    handleEmailConfirmation();
 
     // 認証状態の変更を監視
     const { data: { subscription } } = supabase.auth.onAuthStateChange(
       async (event, session) => {
+        if (event === 'TOKEN_REFRESHED' || event === 'SIGNED_IN') {
+          if (session?.user) {
+            const { data: profile } = await supabase
+              .from('profiles')
+              .select('*')
+              .eq('id', session.user.id)
+              .single();
+
+            if (profile && !profile.onboarding_completed) {
+              setCurrentView('onboarding');
+            } else {
+              setIsAuthenticated(true);
+            }
+          }
+        }
         if (event === 'SIGNED_IN' && session?.user) {
           const { data: profile } = await supabase
             .from('profiles')

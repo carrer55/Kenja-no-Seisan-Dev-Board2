@@ -38,7 +38,7 @@ function Register({ onNavigate }: RegisterProps) {
         email,
         password,
         options: {
-          emailRedirectTo: `${window.location.origin}/auth/callback`
+          emailRedirectTo: `${window.location.origin}/`
         }
       });
 
