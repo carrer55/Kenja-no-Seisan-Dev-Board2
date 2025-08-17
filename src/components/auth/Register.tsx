@@ -76,7 +76,7 @@ function Register({ onNavigate }: RegisterProps) {
           }
         }
         setError(error.message);
-        return;
+        emailRedirectTo: `${import.meta.env.VITE_SITE_URL || import.meta.env.NEXT_PUBLIC_SITE_URL || "http://localhost:3000"}/auth/callback`
       }
 
       // 仮登録完了画面へ

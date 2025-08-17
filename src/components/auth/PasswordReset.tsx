@@ -19,7 +19,7 @@ function PasswordReset({ onNavigate }: PasswordResetProps) {
 
     try {
       const { error } = await supabase.auth.resetPasswordForEmail(email, {
-        redirectTo: `${window.location.origin}/#/password-reset-confirm`,
+        redirectTo: `${import.meta.env.VITE_SITE_URL || import.meta.env.NEXT_PUBLIC_SITE_URL || window.location.origin}/#/password-reset-confirm`,
       });
 
       if (error) {
