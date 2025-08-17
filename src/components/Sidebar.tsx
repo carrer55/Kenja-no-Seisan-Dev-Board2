@@ -123,11 +123,35 @@ function Sidebar({ isOpen, onClose, onNavigate, currentView = 'dashboard' }: Sid
               <User className="w-5 h-5 text-white" />
             </div>
             <div>
-              <p className="text-slate-800 text-sm font-medium" id="sidebar-user-name">山田太郎</p>
-              <p className="text-slate-600 text-xs" id="sidebar-user-position">代表取締役</p>
+              <p className="text-slate-800 text-sm font-medium" id="sidebar-user-name">
+                {(() => {
+                  const userProfile = JSON.parse(localStorage.getItem('userProfile') || '{}');
+                  return userProfile.full_name || '山田太郎';
+                })()}
+              </p>
+              <p className="text-slate-600 text-xs" id="sidebar-user-position">
+                {(() => {
+                  const userProfile = JSON.parse(localStorage.getItem('userProfile') || '{}');
+                  return userProfile.position || '代表取締役';
+                })()}
+              </p>
             </div>
           </div>
-          <button className="w-full flex items-center justify-center space-x-2 px-4 py-2 bg-white/30 hover:bg-white/50 rounded-lg border border-white/40 transition-all duration-200 backdrop-blur-sm hover:shadow-lg">
+          <button 
+            onClick={() => {
+              // デモモードの場合はローカルストレージをクリア
+              if (localStorage.getItem('demoMode') === 'true') {
+                localStorage.removeItem('demoMode');
+                localStorage.removeItem('demoSession');
+                localStorage.removeItem('userProfile');
+                window.location.reload();
+              } else {
+                // 通常のログアウト処理
+                // supabase.auth.signOut();
+              }
+            }}
+            className="w-full flex items-center justify-center space-x-2 px-4 py-2 bg-white/30 hover:bg-white/50 rounded-lg border border-white/40 transition-all duration-200 backdrop-blur-sm hover:shadow-lg"
+          >
             <LogOut className="w-4 h-4 text-slate-700" />
             <span className="text-slate-700 text-sm">ログアウト</span>
           </button>

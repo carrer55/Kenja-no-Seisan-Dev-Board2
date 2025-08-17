@@ -19,6 +19,44 @@ function Login({ onNavigate, onLoginSuccess }: LoginProps) {
     setIsLoading(true);
     setError('');
 
+    // デモアカウントの処理
+    if (email === 'demo' && password === 'pass9981') {
+      try {
+        // デモユーザーのプロフィール情報をローカルストレージに設定
+        const demoProfile = {
+          id: 'demo-user-id',
+          full_name: 'デモユーザー',
+          company_name: '株式会社デモ',
+          position: '代表取締役',
+          phone: '090-0000-0000',
+          onboarding_completed: true,
+          role: 'admin'
+        };
+        
+        localStorage.setItem('userProfile', JSON.stringify(demoProfile));
+        localStorage.setItem('demoMode', 'true');
+        
+        // 認証状態をシミュレート
+        const demoSession = {
+          user: {
+            id: 'demo-user-id',
+            email: 'demo',
+            email_confirmed_at: new Date().toISOString()
+          }
+        };
+        
+        localStorage.setItem('demoSession', JSON.stringify(demoSession));
+        
+        // ログイン成功
+        onLoginSuccess();
+        return;
+      } catch (err) {
+        setError('デモアカウントのログインに失敗しました。');
+        setIsLoading(false);
+        return;
+      }
+    }
+
     try {
       const { data, error } = await supabase.auth.signInWithPassword({
         email,

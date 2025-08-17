@@ -16,6 +16,25 @@ function AuthWrapper() {
   useEffect(() => {
     const checkAuth = async () => {
       try {
+        // デモモードのチェック
+        const demoMode = localStorage.getItem('demoMode');
+        const demoSession = localStorage.getItem('demoSession');
+        
+        if (demoMode === 'true' && demoSession) {
+          try {
+            const session = JSON.parse(demoSession);
+            if (session.user && session.user.email_confirmed_at) {
+              setIsAuthenticated(true);
+              setIsLoading(false);
+              return;
+            }
+          } catch (error) {
+            console.error('Demo session parse error:', error);
+            localStorage.removeItem('demoMode');
+            localStorage.removeItem('demoSession');
+          }
+        }
+
         // URLパラメータをチェック（クエリパラメータとハッシュフラグメント両方）
         const urlParams = new URLSearchParams(window.location.search);
         const hashParams = new URLSearchParams(window.location.hash.substring(1));
