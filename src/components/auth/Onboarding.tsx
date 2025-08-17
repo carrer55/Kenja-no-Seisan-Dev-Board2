@@ -40,17 +40,18 @@ function Onboarding({ onNavigate, onComplete }: OnboardingProps) {
       // プロフィール情報を更新
       const { error: updateError } = await supabase
         .from('profiles')
-        .update({
+        .upsert({
+          id: user.id,
           full_name: formData.fullName,
           company_name: formData.companyName,
           position: formData.position,
           phone: formData.phone,
           onboarding_completed: true,
           updated_at: new Date().toISOString()
-        })
-        .eq('id', user.id);
+        });
 
       if (updateError) {
+        console.error('Profile update error:', updateError);
         setError('登録に失敗しました。もう一度お試しください。');
         return;
       }

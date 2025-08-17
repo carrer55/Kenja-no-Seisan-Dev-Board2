@@ -31,19 +31,35 @@ function Login({ onNavigate, onLoginSuccess }: LoginProps) {
       }
 
       if (data.user) {
-        // プロフィール情報を確認
-        const { data: profile } = await supabase
-          .from('profiles')
-          .select('*')
-          .eq('id', data.user.id)
-          .single();
+        if (data.user.email_confirmed_at) {
+          // プロフィール情報を確認
+          const { data: profile, error: profileError } = await supabase
+            .from('profiles')
+            .select('*')
+            .eq('id', data.user.id)
+            .single();
 
-        if (profile && !profile.onboarding_completed) {
-          // 本登録が未完了の場合
-          onNavigate('onboarding');
+          if (profileError || !profile) {
+            // プロフィールが存在しない場合は作成
+            const { error: insertError } = await supabase
+              .from('profiles')
+              .insert({
+                id: data.user.id,
+                onboarding_completed: false
+              });
+            
+            if (!insertError) {
+              onNavigate('onboarding');
+            }
+          } else if (!profile.onboarding_completed) {
+            // 本登録が未完了の場合
+            onNavigate('onboarding');
+          } else {
+            // ログイン成功
+            onLoginSuccess();
+          }
         } else {
-          // ログイン成功
-          onLoginSuccess();
+          setError('メールアドレスの確認が完了していません。確認メールをご確認ください。');
         }
       }
     } catch (err) {
