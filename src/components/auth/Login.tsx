@@ -148,6 +148,16 @@ function Login({ onNavigate, onLoginSuccess }: LoginProps) {
             {/* リンク */}
             <div className="mt-6 space-y-4">
               <div className="text-center">
+                <p className="text-slate-600 text-sm mb-3">確認メールが届かない場合</p>
+                <button
+                  onClick={() => onNavigate('register')}
+                  className="text-navy-600 hover:text-navy-800 text-sm font-medium transition-colors"
+                >
+                  同じメールアドレスで再度登録して確認メールを再送
+                </button>
+              </div>
+              
+              <div className="text-center">
                 <button
                   onClick={() => onNavigate('password-reset')}
                   className="text-navy-600 hover:text-navy-800 text-sm font-medium transition-colors"

@@ -22,7 +22,7 @@ function RegisterSuccess({ onNavigate }: RegisterSuccessProps) {
               <h1 className="text-3xl lg:text-4xl font-bold text-emerald-800 mb-4">
                 確認メール送信完了
               </h1>
-              <p className="text-xl text-slate-700 mb-2">仮登録が完了しました</p>
+              <p className="text-xl text-slate-700 mb-2">確認メールを送信しました</p>
               <p className="text-slate-600">ご登録いただいたメールアドレスに確認メールを送信いたしました</p>
             </div>
 
@@ -58,8 +58,23 @@ function RegisterSuccess({ onNavigate }: RegisterSuccessProps) {
               <ul className="text-amber-700 text-sm space-y-1 text-left">
                 <li>• 確認メールが届かない場合は、迷惑メールフォルダをご確認ください</li>
                 <li>• 確認リンクの有効期限は24時間です</li>
-                <li>• メールが届かない場合は、再度登録をお試しください</li>
+                <li>• 既に仮登録済みの場合でも、本登録未完了なら確認メールを再送します</li>
+                <li>• メールが届かない場合は、再度同じメールアドレスで登録をお試しください</li>
               </ul>
+            </div>
+
+            {/* 確認メール再送ボタン */}
+            <div className="backdrop-blur-xl bg-white/20 rounded-lg p-4 border border-white/30 mb-8">
+              <h4 className="font-semibold text-slate-800 mb-2">確認メールが届かない場合</h4>
+              <p className="text-slate-600 text-sm mb-4">
+                同じメールアドレスで再度登録を行うと、確認メールが再送されます。
+              </p>
+              <button
+                onClick={() => onNavigate('register')}
+                className="w-full px-4 py-2 bg-gradient-to-r from-slate-600 to-slate-800 hover:from-slate-700 hover:to-slate-900 text-white rounded-lg font-medium transition-all duration-200"
+              >
+                登録画面に戻って再送する
+              </button>
             </div>
 
             {/* アクションボタン */}
