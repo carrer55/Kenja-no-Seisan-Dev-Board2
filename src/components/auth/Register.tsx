@@ -30,6 +30,7 @@ type RegisterFormData = z.infer<typeof registerSchema>;
 
 function Register({ onNavigate }: RegisterProps) {
   const [showPassword, setShowPassword] = useState(false);
+  const [showConfirmPassword, setShowConfirmPassword] = useState(false);
   const [isLoading, setIsLoading] = useState(false);
   const [error, setError] = useState('');
 
