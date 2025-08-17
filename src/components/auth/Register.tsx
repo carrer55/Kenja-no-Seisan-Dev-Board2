@@ -259,7 +259,7 @@ function Register({ onNavigate }: RegisterProps) {
               登録することで、利用規約とプライバシーポリシーに同意したものとみなされます。
             </p>
             <p className="text-slate-500 text-xs mt-2">
-              既に仮登録済みの場合は、確認メールを再送します。
+              © 2025 賢者の精算. All rights reserved.
             </p>
           </div>
         </div>
