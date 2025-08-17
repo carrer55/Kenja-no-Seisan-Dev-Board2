@@ -64,17 +64,14 @@ function RegisterSuccess({ onNavigate }: RegisterSuccessProps) {
             </div>
 
             {/* 確認メール再送ボタン */}
-            <div className="backdrop-blur-xl bg-white/20 rounded-lg p-4 border border-white/30 mb-8">
-              <h4 className="font-semibold text-slate-800 mb-2">確認メールが届かない場合</h4>
-              <p className="text-slate-600 text-sm mb-4">
-                同じメールアドレスで再度登録を行うと、確認メールが再送されます。
-              </p>
-              <button
-                onClick={() => onNavigate('register')}
-                className="w-full px-4 py-2 bg-gradient-to-r from-slate-600 to-slate-800 hover:from-slate-700 hover:to-slate-900 text-white rounded-lg font-medium transition-all duration-200"
-              >
-                登録画面に戻って再送する
-              </button>
+            <div className="backdrop-blur-xl bg-blue-50/50 rounded-lg p-4 border border-blue-200/50 mb-8">
+              <h4 className="font-semibold text-blue-800 mb-2">確認メールが届かない場合</h4>
+              <ul className="text-blue-700 text-sm space-y-1 text-left">
+                <li>• 迷惑メールフォルダをご確認ください</li>
+                <li>• メールアドレスに間違いがないかご確認ください</li>
+                <li>• しばらく時間をおいてから再度お試しください</li>
+                <li>• 問題が解決しない場合はサポートにお問い合わせください</li>
+              </ul>
             </div>
 
             {/* アクションボタン */}

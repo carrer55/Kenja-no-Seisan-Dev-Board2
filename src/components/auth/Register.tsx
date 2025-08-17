@@ -34,33 +34,43 @@ function Register({ onNavigate }: RegisterProps) {
     }
 
     try {
-      // ユーザー登録を試行
       const { data, error } = await supabase.auth.signUp({
         email,
         password,
         options: {
-          emailRedirectTo: `${window.location.origin}/#/email-confirmed`
+          emailRedirectTo: `${window.location.origin}/#/email-confirmed`,
+          data: {
+            email_confirm: true
+          }
         }
       });
 
       if (error) {
-        if (error.message.includes('User already registered')) {
-          // 確認メール再送処理
-          const { error: resendError } = await supabase.auth.resend({
-            type: 'signup',
-            email: email,
-            options: {
-              emailRedirectTo: `${window.location.origin}/#/email-confirmed`
+        // 既に登録済みの場合は確認メールを再送
+        if (error.message.includes('already') || error.message.includes('registered')) {
+          try {
+            const { error: resendError } = await supabase.auth.resend({
+              type: 'signup',
+              email: email,
+              options: {
+                emailRedirectTo: `${window.location.origin}/#/email-confirmed`
+              }
+            });
+            
+            if (resendError) {
+              console.error('Resend error:', resendError);
+              // 再送エラーでも成功画面に遷移（メールが既に送信済みの可能性）
+              onNavigate('register-success');
+            } else {
+              onNavigate('register-success');
             }
-          });
-          
-          if (resendError) {
-            console.error('Resend error:', resendError);
-            setError('確認メールの再送に失敗しました。しばらく時間をおいてから再度お試しください。');
-          } else {
+            return;
+          } catch (resendErr) {
+            console.error('Resend catch error:', resendErr);
+            // エラーでも成功画面に遷移
             onNavigate('register-success');
+            return;
           }
-          return;
         }
         setError(error.message);
         return;

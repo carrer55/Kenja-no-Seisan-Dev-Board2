@@ -148,13 +148,10 @@ function Login({ onNavigate, onLoginSuccess }: LoginProps) {
             {/* リンク */}
             <div className="mt-6 space-y-4">
               <div className="text-center">
-                <p className="text-slate-600 text-sm mb-3">確認メールが届かない場合</p>
-                <button
-                  onClick={() => onNavigate('register')}
-                  className="text-navy-600 hover:text-navy-800 text-sm font-medium transition-colors"
-                >
-                  同じメールアドレスで再度登録して確認メールを再送
-                </button>
+                <p className="text-slate-600 text-sm mb-3">メールアドレスの確認がお済みでない方</p>
+                <p className="text-slate-500 text-xs">
+                  新規登録画面から同じメールアドレスで登録すると確認メールが再送されます
+                </p>
               </div>
               
               <div className="text-center">
