@@ -41,31 +41,54 @@ function Register({ onNavigate }: RegisterProps) {
     setError('');
 
     try {
-      const { error } = await supabase.auth.signUp({
+      // 環境変数からサイトURLを取得、未設定時はlocalhostをデフォルトに
+      const siteUrl = import.meta.env.VITE_SITE_URL || 
+                     import.meta.env.NEXT_PUBLIC_SITE_URL || 
+                     'http://localhost:3000';
+      
+      const redirectUrl = `${siteUrl}/auth/callback`;
+
+      console.log('Attempting signup with:', {
+        email: data.email,
+        redirectUrl
+      });
+
+      const { data: signUpData, error: signUpError } = await supabase.auth.signUp({
         email: data.email,
         password: data.password,
         options: {
-          emailRedirectTo: `${import.meta.env.VITE_SITE_URL || "http://localhost:3000"}/auth/callback`
+          emailRedirectTo: redirectUrl
         }
       });
 
-      if (error) {
-        // 既に登録済みの場合は確認メールを再送
-        if (error.message.includes('already') || error.message.includes('registered')) {
+      console.log('SignUp response:', { signUpData, signUpError });
+
+      if (signUpError) {
+        console.error('SignUp error:', signUpError);
+        
+        // 既に登録済みの場合の処理
+        if (signUpError.message.includes('already') || 
+            signUpError.message.includes('registered') ||
+            signUpError.message.includes('User already registered')) {
+          
+          console.log('User already exists, attempting to resend confirmation email');
+          
+          // 確認メールを再送
           try {
             const { error: resendError } = await supabase.auth.resend({
               type: 'signup',
               email: data.email,
               options: {
-                emailRedirectTo: `${import.meta.env.VITE_SITE_URL || "http://localhost:3000"}/auth/callback`
+                emailRedirectTo: redirectUrl
               }
             });
             
             if (resendError) {
               console.error('Resend error:', resendError);
+              // 再送エラーでも成功画面に遷移（メールが既に送信済みの可能性）
             }
             
-            // 再送成功・失敗に関わらず成功画面に遷移
+            console.log('Resend attempt completed, navigating to success page');
             onNavigate('register-success');
             return;
           } catch (resendErr) {
@@ -75,14 +98,18 @@ function Register({ onNavigate }: RegisterProps) {
             return;
           }
         }
-        setError(error.message);
-        emailRedirectTo: `${import.meta.env.VITE_SITE_URL || import.meta.env.NEXT_PUBLIC_SITE_URL || "http://localhost:3000"}/auth/callback`
+        
+        // その他のエラー
+        setError(`登録エラー: ${signUpError.message}`);
+        return;
       }
 
-      // 仮登録完了画面へ
+      // サインアップ成功
+      console.log('SignUp successful, user:', signUpData.user?.id);
       onNavigate('register-success');
+      
     } catch (err) {
-      console.error('Registration error:', err);
+      console.error('Registration catch error:', err);
       setError('登録に失敗しました。もう一度お試しください。');
     } finally {
       setIsLoading(false);
@@ -171,7 +198,7 @@ function Register({ onNavigate }: RegisterProps) {
                 className="w-full flex items-center justify-center space-x-2 px-6 py-3 bg-gradient-to-r from-emerald-600 to-emerald-800 hover:from-emerald-700 hover:to-emerald-900 text-white rounded-lg font-medium shadow-xl hover:shadow-2xl transition-all duration-200 transform hover:scale-105 disabled:opacity-50 disabled:cursor-not-allowed"
               >
                 <UserPlus className="w-5 h-5" />
-                <span>{isLoading ? '登録中...' : '仮登録'}</span>
+                <span>{isLoading ? '登録中...' : '新規登録'}</span>
               </button>
             </form>
 
@@ -193,7 +220,7 @@ function Register({ onNavigate }: RegisterProps) {
               登録することで、利用規約とプライバシーポリシーに同意したものとみなされます。
             </p>
             <p className="text-slate-500 text-xs mt-2">
-              既に仮登録済みの場合でも、本登録未完了なら確認メールを再送します。
+              既に仮登録済みの場合は、確認メールを再送します。
             </p>
           </div>
         </div>
