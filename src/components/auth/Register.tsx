@@ -17,7 +17,13 @@ const registerSchema = z.object({
     .email('正しいメールアドレスを入力してください'),
   password: z
     .string()
-    .min(8, 'パスワードは8文字以上で入力してください')
+    .min(8, 'パスワードは8文字以上で入力してください'),
+  confirmPassword: z
+    .string()
+    .min(1, 'パスワード再確認は必須です')
+}).refine((data) => data.password === data.confirmPassword, {
+  message: "パスワードが一致しません",
+  path: ["confirmPassword"],
 });
 
 type RegisterFormData = z.infer<typeof registerSchema>;
@@ -189,6 +195,35 @@ function Register({ onNavigate }: RegisterProps) {
                 </div>
                 {errors.password && (
                   <p className="text-red-600 text-sm mt-1">{errors.password.message}</p>
+                )}
+              </div>
+
+              <div>
+                <label className="block text-sm font-medium text-slate-700 mb-2">
+                  パスワード再確認
+                </label>
+                <div className="relative">
+                  <Lock className="absolute left-3 top-1/2 transform -translate-y-1/2 text-slate-400 w-5 h-5" />
+                  <input
+                    type={showConfirmPassword ? 'text' : 'password'}
+                    {...register('confirmPassword')}
+                    className={`w-full pl-10 pr-12 py-3 bg-white/50 border rounded-lg text-slate-700 placeholder-slate-500 focus:outline-none focus:ring-2 backdrop-blur-xl ${
+                      errors.confirmPassword 
+                        ? 'border-red-400 focus:ring-red-400' 
+                        : 'border-white/40 focus:ring-emerald-400'
+                    }`}
+                    placeholder="パスワードを再入力"
+                  />
+                  <button
+                    type="button"
+                    onClick={() => setShowConfirmPassword(!showConfirmPassword)}
+                    className="absolute right-3 top-1/2 transform -translate-y-1/2 text-slate-400 hover:text-slate-600"
+                  >
+                    {showConfirmPassword ? <EyeOff className="w-5 h-5" /> : <Eye className="w-5 h-5" />}
+                  </button>
+                </div>
+                {errors.confirmPassword && (
+                  <p className="text-red-600 text-sm mt-1">{errors.confirmPassword.message}</p>
                 )}
               </div>
 
