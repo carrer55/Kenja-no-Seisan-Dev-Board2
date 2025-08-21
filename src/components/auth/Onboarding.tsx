@@ -46,6 +46,8 @@ function Onboarding({ onNavigate, onComplete }: OnboardingProps) {
           company_name: formData.companyName,
           position: formData.position,
           phone: formData.phone,
+          department: '', // デフォルト値
+          role: 'user', // デフォルトは一般ユーザー
           onboarding_completed: true,
           updated_at: new Date().toISOString()
         }], {
