@@ -1,8 +1,8 @@
 import React from 'react';
-import { Plane, Receipt, Plus } from 'lucide-react';
+import { Plane, Receipt, Plus, Eye } from 'lucide-react';
 
 interface QuickActionsProps {
-  onNavigate: (view: 'dashboard' | 'business-trip' | 'expense' | 'tax-simulation') => void;
+  onNavigate: (view: 'dashboard' | 'business-trip' | 'expense' | 'tax-simulation' | 'application-status') => void;
   onCreateApplication: (type: 'business_trip' | 'expense') => void;
 }
 

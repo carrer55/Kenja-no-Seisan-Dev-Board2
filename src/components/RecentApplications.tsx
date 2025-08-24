@@ -1,5 +1,5 @@
 import React from 'react';
-import { MoreHorizontal } from 'lucide-react';
+import { MoreHorizontal, Bell } from 'lucide-react';
 
 const applications = [
   {
@@ -62,30 +62,30 @@ function RecentApplications({ onShowDetail, onNavigate, onShowNotifications }: R
 
       <div className="overflow-hidden relative z-10">
         <div className="overflow-x-auto">
-        <div className="space-y-3">
-          <div className="grid grid-cols-5 gap-2 lg:gap-4 text-xs font-medium text-slate-600 pb-2 border-b border-white/30 min-w-max">
-            <span>日付</span>
-            <span>種別</span>
-            <span>申請者</span>
-            <span>金額</span>
-            <span>ステータス</span>
-          </div>
-          {applications.map((app, index) => (
-            <div 
-              key={index} 
-              className="grid grid-cols-5 gap-2 lg:gap-4 items-center py-3 hover:bg-white/20 rounded-lg px-2 transition-colors min-w-max cursor-pointer"
-              onClick={() => onShowDetail(app.type === '出張申請' ? 'business-trip' : 'expense', `${app.type}-${index}`)}
-            >
-              <span className="text-slate-700 text-sm">{app.date}</span>
-              <span className="text-slate-700 text-sm">{app.type}</span>
-              <span className="text-slate-700 text-sm">{app.applicant}</span>
-              <span className="text-slate-900 font-medium text-sm">{app.amount}</span>
-              <span className={`px-2 py-1 rounded-full text-xs font-medium ${app.statusColor}`}>
-                {app.status}
-              </span>
+          <div className="space-y-3">
+            <div className="grid grid-cols-5 gap-2 lg:gap-4 text-xs font-medium text-slate-600 pb-2 border-b border-white/30 min-w-max">
+              <span>日付</span>
+              <span>種別</span>
+              <span>申請者</span>
+              <span>金額</span>
+              <span>ステータス</span>
             </div>
-          ))}
-        </div>
+            {applications.map((app, index) => (
+              <div 
+                key={index} 
+                className="grid grid-cols-5 gap-2 lg:gap-4 items-center py-3 hover:bg-white/20 rounded-lg px-2 transition-colors min-w-max cursor-pointer"
+                onClick={() => onShowDetail(app.type === '出張申請' ? 'business-trip' : 'expense', `${app.type}-${index}`)}
+              >
+                <span className="text-slate-700 text-sm">{app.date}</span>
+                <span className="text-slate-700 text-sm">{app.type}</span>
+                <span className="text-slate-700 text-sm">{app.applicant}</span>
+                <span className="text-slate-900 font-medium text-sm">{app.amount}</span>
+                <span className={`px-2 py-1 rounded-full text-xs font-medium ${app.statusColor}`}>
+                  {app.status}
+                </span>
+              </div>
+            ))}
+          </div>
         </div>
       </div>
     </div>
