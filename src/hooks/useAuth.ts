@@ -173,6 +173,12 @@ export function useAuth() {
   };
 
   const signUp = async (email: string, password: string) => {
+  const signUp = async (email: string, password: string, profileData?: {
+    full_name: string;
+    company_name: string;
+    position: string;
+    phone: string;
+  }) => {
     try {
       setAuthState(prev => ({ ...prev, loading: true, error: null }));
 
@@ -180,13 +186,42 @@ export function useAuth() {
         email,
         password,
         options: {
-          emailRedirectTo: `${window.location.origin}/auth/callback`
+          emailRedirectTo: `${window.location.origin}/auth/callback`,
+          data: profileData ? {
+            full_name: profileData.full_name,
+            company_name: profileData.company_name,
+            position: profileData.position,
+            phone: profileData.phone
+          } : undefined
         }
       });
 
       if (error) {
         setAuthState(prev => ({ ...prev, loading: false, error: error.message }));
         return { success: false, error: error.message };
+      }
+
+      // プロフィールデータがある場合は、ユーザー作成後にプロフィールを更新
+      if (data.user && profileData) {
+        try {
+          const { error: profileError } = await supabase
+            .from('user_profiles')
+            .upsert({
+              id: data.user.id,
+              email: data.user.email || '',
+              full_name: profileData.full_name,
+              company_name: profileData.company_name,
+              position: profileData.position,
+              phone: profileData.phone,
+              onboarding_completed: true
+            });
+
+          if (profileError) {
+            console.error('Profile creation error:', profileError);
+          }
+        } catch (profileError) {
+          console.error('Profile creation failed:', profileError);
+        }
       }
 
       setAuthState(prev => ({ ...prev, loading: false }));

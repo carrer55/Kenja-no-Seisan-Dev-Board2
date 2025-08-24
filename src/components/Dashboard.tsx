@@ -1,4 +1,8 @@
 import React, { useState } from 'react';
+import ApplicationForm from './ApplicationForm';
+import ApplicationList from './ApplicationList';
+import ApprovalWorkflow from './ApprovalWorkflow';
+import NotificationCenter from './NotificationCenter';
 import Sidebar from './Sidebar';
 import TopBar from './TopBar';
 import MainContent from './MainContent';
@@ -28,6 +32,11 @@ import AccountingError from './AccountingError';
 function Dashboard() {
   const [isSidebarOpen, setIsSidebarOpen] = useState(false);
   const [currentView, setCurrentView] = useState<string>('dashboard');
+  const [showApplicationForm, setShowApplicationForm] = useState(false);
+  const [applicationFormType, setApplicationFormType] = useState<'business_trip' | 'expense'>('business_trip');
+  const [showApprovalWorkflow, setShowApprovalWorkflow] = useState(false);
+  const [selectedApplicationId, setSelectedApplicationId] = useState<string>('');
+  const [showNotificationCenter, setShowNotificationCenter] = useState(false);
   const [applicationDetail, setApplicationDetail] = useState<{type: 'business-trip' | 'expense', id: string} | null>(null);
   const [documentType, setDocumentType] = useState<string>('');
   const [documentId, setDocumentId] = useState<string>('');
@@ -38,6 +47,9 @@ function Dashboard() {
 
   const navigateToView = (view: string, param?: string) => {
     setCurrentView(view);
+    setShowApplicationForm(false);
+    setShowApprovalWorkflow(false);
+    setShowNotificationCenter(false);
     if (view === 'document-creation' && param) {
       setDocumentType(param);
     }
@@ -46,17 +58,100 @@ function Dashboard() {
     }
   };
 
+  const handleCreateApplication = (type: 'business_trip' | 'expense') => {
+    setApplicationFormType(type);
+    setShowApplicationForm(true);
+  };
+
+  const handleApplicationSuccess = () => {
+    setShowApplicationForm(false);
+    setCurrentView('application-status');
+  };
+
+  const handleApprovalRequest = (applicationId: string) => {
+    setSelectedApplicationId(applicationId);
+    setShowApprovalWorkflow(true);
+  };
+
+  const handleApprovalComplete = () => {
+    setShowApprovalWorkflow(false);
+    setCurrentView('application-status');
+  };
+
   const showApplicationDetail = (type: 'business-trip' | 'expense', id: string) => {
     setApplicationDetail({ type, id });
     setCurrentView('application-detail');
   };
 
   const renderCurrentView = () => {
+    // アプリケーションフォームの表示
+    if (showApplicationForm) {
+      return (
+        <div className="flex h-screen relative">
+          <div className="hidden lg:block">
+            <Sidebar isOpen={true} onClose={() => {}} onNavigate={navigateToView} currentView={currentView} />
+          </div>
+          <div className="flex-1 flex flex-col min-w-0">
+            <TopBar onMenuClick={toggleSidebar} onNavigate={navigateToView} />
+            <div className="flex-1 overflow-auto p-4 lg:p-6 relative z-10">
+              <ApplicationForm 
+                type={applicationFormType}
+                onSuccess={handleApplicationSuccess}
+                onCancel={() => setShowApplicationForm(false)}
+              />
+            </div>
+          </div>
+        </div>
+      );
+    }
+
+    // 承認ワークフローの表示
+    if (showApprovalWorkflow) {
+      return (
+        <div className="flex h-screen relative">
+          <div className="hidden lg:block">
+            <Sidebar isOpen={true} onClose={() => {}} onNavigate={navigateToView} currentView={currentView} />
+          </div>
+          <div className="flex-1 flex flex-col min-w-0">
+            <TopBar onMenuClick={toggleSidebar} onNavigate={navigateToView} />
+            <div className="flex-1 overflow-auto p-4 lg:p-6 relative z-10">
+              <ApprovalWorkflow 
+                applicationId={selectedApplicationId}
+                onComplete={handleApprovalComplete}
+                onCancel={() => setShowApprovalWorkflow(false)}
+              />
+            </div>
+          </div>
+        </div>
+      );
+    }
+
     switch (currentView) {
       case 'business-trip':
-        return <BusinessTripApplication onNavigate={navigateToView} />;
+        setShowApplicationForm(true);
+        setApplicationFormType('business_trip');
+        return null;
       case 'expense':
-        return <ExpenseApplication onNavigate={navigateToView} />;
+        setShowApplicationForm(true);
+        setApplicationFormType('expense');
+        return null;
+      case 'application-status':
+        return (
+          <div className="flex h-screen relative">
+            <div className="hidden lg:block">
+              <Sidebar isOpen={true} onClose={() => {}} onNavigate={navigateToView} currentView="application-status" />
+            </div>
+            <div className="flex-1 flex flex-col min-w-0">
+              <TopBar onMenuClick={toggleSidebar} onNavigate={navigateToView} />
+              <div className="flex-1 overflow-auto p-4 lg:p-6 relative z-10">
+                <ApplicationList 
+                  onCreateNew={handleCreateApplication}
+                  onViewDetail={(id) => setCurrentView('application-detail')}
+                />
+              </div>
+            </div>
+          </div>
+        );
       case 'tax-simulation':
         return <TaxSimulation onNavigate={navigateToView} />;
       case 'travel-regulation-management':
@@ -127,7 +222,12 @@ function Dashboard() {
             {/* Main Content Area */}
             <div className="flex-1 flex flex-col min-w-0">
               <TopBar onMenuClick={toggleSidebar} onNavigate={navigateToView} />
-              <MainContent onNavigate={navigateToView} onShowDetail={showApplicationDetail} />
+              <MainContent 
+                onNavigate={navigateToView} 
+                onShowDetail={showApplicationDetail}
+                onCreateApplication={handleCreateApplication}
+                onShowNotifications={() => setShowNotificationCenter(true)}
+              />
             </div>
           </div>
         );
@@ -141,6 +241,11 @@ function Dashboard() {
       <div className="absolute top-0 left-0 w-full h-full bg-gradient-to-br from-blue-100/20 via-transparent to-indigo-100/20"></div>
 
       {renderCurrentView()}
+
+      {/* 通知センター */}
+      {showNotificationCenter && (
+        <NotificationCenter onClose={() => setShowNotificationCenter(false)} />
+      )}
     </div>
   );
 }

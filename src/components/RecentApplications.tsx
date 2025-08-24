@@ -31,9 +31,10 @@ const applications = [
 interface RecentApplicationsProps {
   onShowDetail: (type: 'business-trip' | 'expense', id: string) => void;
   onNavigate: (view: string) => void;
+  onShowNotifications: () => void;
 }
 
-function RecentApplications({ onShowDetail, onNavigate }: RecentApplicationsProps) {
+function RecentApplications({ onShowDetail, onNavigate, onShowNotifications }: RecentApplicationsProps) {
   return (
     <div className="backdrop-blur-xl bg-white/20 rounded-xl p-4 lg:p-6 border border-white/30 shadow-xl relative overflow-hidden">
       {/* Glass effect overlay */}
@@ -42,12 +43,21 @@ function RecentApplications({ onShowDetail, onNavigate }: RecentApplicationsProp
       
       <div className="flex items-center justify-between mb-6">
         <h2 className="text-lg lg:text-xl font-semibold text-slate-800 relative z-10">最近の申請</h2>
-        <button 
-          onClick={() => onNavigate('application-status')}
-          className="text-slate-400 hover:text-slate-600 relative z-10"
-        >
-          <MoreHorizontal className="w-5 h-5" />
-        </button>
+        <div className="flex items-center space-x-2 relative z-10">
+          <button 
+            onClick={onShowNotifications}
+            className="p-2 text-slate-600 hover:text-slate-800 hover:bg-white/30 rounded-lg transition-colors"
+            title="通知センター"
+          >
+            <Bell className="w-5 h-5" />
+          </button>
+          <button 
+            onClick={() => onNavigate('application-status')}
+            className="text-slate-400 hover:text-slate-600"
+          >
+            <MoreHorizontal className="w-5 h-5" />
+          </button>
+        </div>
       </div>
 
       <div className="overflow-hidden relative z-10">

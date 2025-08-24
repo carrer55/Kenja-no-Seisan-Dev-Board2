@@ -7,9 +7,11 @@ import ActivityFeed from './ActivityFeed';
 interface MainContentProps {
   onNavigate: (view: string) => void;
   onShowDetail: (type: 'business-trip' | 'expense', id: string) => void;
+  onCreateApplication: (type: 'business_trip' | 'expense') => void;
+  onShowNotifications: () => void;
 }
 
-function MainContent({ onNavigate, onShowDetail }: MainContentProps) {
+function MainContent({ onNavigate, onShowDetail, onCreateApplication, onShowNotifications }: MainContentProps) {
   // ユーザーの役割を取得（実際の実装では、ユーザー情報から取得）
   const getUserRole = () => {
     const userProfile = JSON.parse(localStorage.getItem('userProfile') || '{}');
@@ -35,10 +37,14 @@ function MainContent({ onNavigate, onShowDetail }: MainContentProps) {
         </div>
         
         <StatsCards />
-        <QuickActions onNavigate={onNavigate} />
+        <QuickActions onNavigate={onNavigate} onCreateApplication={onCreateApplication} />
         
         <div className="grid grid-cols-1 xl:grid-cols-2 gap-4 lg:gap-6">
-          <RecentApplications onShowDetail={onShowDetail} onNavigate={onNavigate} />
+          <RecentApplications 
+            onShowDetail={onShowDetail} 
+            onNavigate={onNavigate}
+            onShowNotifications={onShowNotifications}
+          />
           <ActivityFeed />
         </div>
       </div>

@@ -1,12 +1,16 @@
 import React from 'react';
 import { Bell, HelpCircle, MessageCircle, User, Menu } from 'lucide-react';
+import { useNotifications } from '../hooks/useNotifications';
 
 interface TopBarProps {
   onMenuClick: () => void;
   onNavigate?: (view: string) => void;
+  onShowNotifications?: () => void;
 }
 
-function TopBar({ onMenuClick, onNavigate }: TopBarProps) {
+function TopBar({ onMenuClick, onNavigate, onShowNotifications }: TopBarProps) {
+  const { unreadCount } = useNotifications();
+  
   // ユーザーのプラン情報を取得（実際の実装では、ユーザー情報から取得）
   const getCurrentPlan = () => {
     const userProfile = JSON.parse(localStorage.getItem('userProfile') || '{}');
@@ -34,10 +38,15 @@ function TopBar({ onMenuClick, onNavigate }: TopBarProps) {
         <div className="flex items-center space-x-1 lg:space-x-2">
           <div className="relative group">
             <button 
-              onClick={() => onNavigate && onNavigate('notification-history')}
+              onClick={() => onShowNotifications ? onShowNotifications() : onNavigate && onNavigate('notification-history')}
               className="p-2 text-slate-600 hover:text-slate-800 hover:bg-white/30 rounded-lg transition-all duration-200 backdrop-blur-sm hover:shadow-lg"
             >
               <Bell className="w-5 h-5" />
+              {unreadCount > 0 && (
+                <span className="absolute -top-1 -right-1 w-5 h-5 bg-red-500 text-white rounded-full text-xs flex items-center justify-center font-medium">
+                  {unreadCount > 9 ? '9+' : unreadCount}
+                </span>
+              )}
             </button>
             {/* ツールチップ */}
             <div className="absolute right-full mr-2 top-1/2 transform -translate-y-1/2 px-2 py-1 bg-slate-800 text-white text-xs rounded opacity-0 group-hover:opacity-100 transition-opacity duration-200 pointer-events-none whitespace-nowrap z-50">
