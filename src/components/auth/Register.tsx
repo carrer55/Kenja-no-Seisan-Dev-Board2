@@ -3,7 +3,7 @@ import { useForm } from 'react-hook-form';
 import { zodResolver } from '@hookform/resolvers/zod';
 import { z } from 'zod';
 import { Mail, Lock, Eye, EyeOff, UserPlus, ArrowLeft } from 'lucide-react';
-import { supabase } from '../../lib/supabase';
+import { useAuth } from '../../hooks/useAuth';
 
 interface RegisterProps {
   onNavigate: (view: string) => void;
@@ -31,8 +31,7 @@ type RegisterFormData = z.infer<typeof registerSchema>;
 function Register({ onNavigate }: RegisterProps) {
   const [showPassword, setShowPassword] = useState(false);
   const [showConfirmPassword, setShowConfirmPassword] = useState(false);
-  const [isLoading, setIsLoading] = useState(false);
-  const [error, setError] = useState('');
+  const { signUp, loading, error } = useAuth();
 
   const {
     register,
@@ -44,82 +43,13 @@ function Register({ onNavigate }: RegisterProps) {
   });
 
   const onSubmit = async (data: RegisterFormData) => {
-    setIsLoading(true);
-    setError('');
-
-    try {
-      // 環境変数からサイトURLを取得、未設定時はlocalhostをデフォルトに
-      const siteUrl = import.meta.env.VITE_SITE_URL || 
-                     import.meta.env.NEXT_PUBLIC_SITE_URL || 
-                     'http://localhost:3000';
-      
-      const redirectUrl = `${siteUrl}/auth/callback`;
-
-      console.log('Attempting signup with:', {
-        email: data.email,
-        redirectUrl
-      });
-
-      const { data: signUpData, error: signUpError } = await supabase.auth.signUp({
-        email: data.email,
-        password: data.password,
-        options: {
-          emailRedirectTo: redirectUrl
-        }
-      });
-
-      console.log('SignUp response:', { signUpData, signUpError });
-
-      if (signUpError) {
-        console.error('SignUp error:', signUpError);
-        
-        // 既に登録済みの場合の処理
-        if (signUpError.message.includes('already') || 
-            signUpError.message.includes('registered') ||
-            signUpError.message.includes('User already registered')) {
-          
-          console.log('User already exists, attempting to resend confirmation email');
-          
-          // 確認メールを再送
-          try {
-            const { error: resendError } = await supabase.auth.resend({
-              type: 'signup',
-              email: data.email,
-              options: {
-                emailRedirectTo: redirectUrl
-              }
-            });
-            
-            if (resendError) {
-              console.error('Resend error:', resendError);
-              // 再送エラーでも成功画面に遷移（メールが既に送信済みの可能性）
-            }
-            
-            console.log('Resend attempt completed, navigating to success page');
-            onNavigate('register-success');
-            return;
-          } catch (resendErr) {
-            console.error('Resend catch error:', resendErr);
-            // エラーでも成功画面に遷移
-            onNavigate('register-success');
-            return;
-          }
-        }
-        
-        // その他のエラー
-        setError(`登録エラー: ${signUpError.message}`);
-        return;
-      }
-
-      // サインアップ成功
-      console.log('SignUp successful, user:', signUpData.user?.id);
+    const result = await signUp(data.email, data.password);
+    
+    if (result.success) {
       onNavigate('register-success');
-      
-    } catch (err) {
-      console.error('Registration catch error:', err);
-      setError('登録に失敗しました。もう一度お試しください。');
-    } finally {
-      setIsLoading(false);
+    } else if (result.error?.includes('already') || result.error?.includes('registered')) {
+      // 既に登録済みの場合も成功画面に遷移
+      onNavigate('register-success');
     }
   };
 
@@ -233,11 +163,11 @@ function Register({ onNavigate }: RegisterProps) {
 
               <button
                 type="submit"
-                disabled={isLoading || !isValid}
+                disabled={loading || !isValid}
                 className="w-full flex items-center justify-center space-x-2 px-6 py-3 bg-gradient-to-r from-emerald-600 to-emerald-800 hover:from-emerald-700 hover:to-emerald-900 text-white rounded-lg font-medium shadow-xl hover:shadow-2xl transition-all duration-200 transform hover:scale-105 disabled:opacity-50 disabled:cursor-not-allowed"
               >
                 <UserPlus className="w-5 h-5" />
-                <span>{isLoading ? '登録中...' : '新規登録'}</span>
+                <span>{loading ? '登録中...' : '新規登録'}</span>
               </button>
             </form>
 

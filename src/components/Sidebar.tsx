@@ -124,21 +124,15 @@ function Sidebar({ isOpen, onClose, onNavigate, currentView = 'dashboard' }: Sid
             </div>
             <div>
               <p className="text-slate-800 text-sm font-medium" id="sidebar-user-name">
-                {(() => {
-                  const userProfile = JSON.parse(localStorage.getItem('userProfile') || '{}');
-                  return userProfile.full_name || '山田太郎';
-                })()}
+                山田太郎
               </p>
               <p className="text-slate-600 text-xs" id="sidebar-user-position">
-                {(() => {
-                  const userProfile = JSON.parse(localStorage.getItem('userProfile') || '{}');
-                  return userProfile.position || '代表取締役';
-                })()}
+                代表取締役
               </p>
             </div>
           </div>
           <button 
-            onClick={() => {
+            onClick={async () => {
               // デモモードの場合はローカルストレージをクリア
               if (localStorage.getItem('demoMode') === 'true') {
                 localStorage.removeItem('demoMode');
@@ -147,7 +141,14 @@ function Sidebar({ isOpen, onClose, onNavigate, currentView = 'dashboard' }: Sid
                 window.location.reload();
               } else {
                 // 通常のログアウト処理
-                // supabase.auth.signOut();
+                try {
+                  const { signOut } = await import('../hooks/useAuth');
+                  // ログアウト処理は AuthWrapper で useAuth フックを通じて処理される
+                  window.location.reload();
+                } catch (error) {
+                  console.error('Logout error:', error);
+                  window.location.reload();
+                }
               }
             }}
             className="w-full flex items-center justify-center space-x-2 px-4 py-2 bg-white/30 hover:bg-white/50 rounded-lg border border-white/40 transition-all duration-200 backdrop-blur-sm hover:shadow-lg"

@@ -1,5 +1,6 @@
 import React, { useState, useEffect } from 'react';
 import { User, Settings, CreditCard, Bell, Users, HelpCircle, Edit, Save, Eye, EyeOff, Link } from 'lucide-react';
+import { useAuth } from '../hooks/useAuth';
 import Sidebar from './Sidebar';
 import TopBar from './TopBar';
 

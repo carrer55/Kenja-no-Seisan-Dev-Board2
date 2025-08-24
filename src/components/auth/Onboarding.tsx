@@ -1,6 +1,6 @@
 import React, { useState } from 'react';
 import { User, Building, Phone, Briefcase, CheckCircle, ArrowRight } from 'lucide-react';
-import { supabase } from '../../lib/supabase';
+import { useAuth } from '../../hooks/useAuth';
 
 interface OnboardingProps {
   onNavigate: (view: string) => void;
@@ -8,6 +8,7 @@ interface OnboardingProps {
 }
 
 function Onboarding({ onNavigate, onComplete }: OnboardingProps) {
+  const { user, updateProfile, loading } = useAuth();
   const [formData, setFormData] = useState({
     fullName: '',
     companyName: '',
@@ -15,58 +16,37 @@ function Onboarding({ onNavigate, onComplete }: OnboardingProps) {
     phone: '',
     agreeToTerms: false
   });
-  const [isLoading, setIsLoading] = useState(false);
   const [error, setError] = useState('');
 
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
-    setIsLoading(true);
     setError('');
 
     if (!formData.agreeToTerms) {
       setError('利用規約とプライバシーポリシーに同意してください');
-      setIsLoading(false);
       return;
     }
 
-    try {
-      const { data: { user } } = await supabase.auth.getUser();
-      
-      if (!user) {
-        setError('ユーザー情報が見つかりません');
-        return;
-      }
+    if (!user) {
+      setError('ユーザー情報が見つかりません');
+      return;
+    }
 
-      // プロフィール情報を更新
-      const { error: updateError } = await supabase
-        .from('profiles')
-        .upsert([{
-          id: user.id,
-          full_name: formData.fullName,
-          company_name: formData.companyName,
-          position: formData.position,
-          phone: formData.phone,
-          department: '', // デフォルト値
-          role: 'user', // デフォルトは一般ユーザー
-          onboarding_completed: true,
-          updated_at: new Date().toISOString()
-        }], {
-          onConflict: 'id'
-        });
+    const result = await updateProfile({
+      email: user.email || '',
+      full_name: formData.fullName,
+      company_name: formData.companyName,
+      position: formData.position,
+      phone: formData.phone,
+      department: '',
+      role: 'user',
+      onboarding_completed: true
+    });
 
-      if (updateError) {
-        console.error('Profile update error:', updateError);
-        setError('登録に失敗しました。もう一度お試しください。');
-        return;
-      }
-
-      // 登録完了
+    if (result.success) {
       onComplete();
-    } catch (err) {
-      console.error('Onboarding error:', err);
-      setError('登録に失敗しました。もう一度お試しください。');
-    } finally {
-      setIsLoading(false);
+    } else {
+      setError(result.error || '登録に失敗しました。もう一度お試しください。');
     }
   };
 
@@ -186,11 +166,11 @@ function Onboarding({ onNavigate, onComplete }: OnboardingProps) {
 
               <button
                 type="submit"
-                disabled={isLoading || !formData.agreeToTerms}
+                disabled={loading || !formData.agreeToTerms}
                 className="w-full flex items-center justify-center space-x-2 px-6 py-3 bg-gradient-to-r from-navy-600 to-navy-800 hover:from-navy-700 hover:to-navy-900 text-white rounded-lg font-medium shadow-xl hover:shadow-2xl transition-all duration-200 transform hover:scale-105 disabled:opacity-50 disabled:cursor-not-allowed"
               >
                 <CheckCircle className="w-5 h-5" />
-                <span>{isLoading ? '登録中...' : '登録完了'}</span>
+                <span>{loading ? '登録中...' : '登録完了'}</span>
               </button>
             </form>
 

@@ -1,6 +1,6 @@
 import React, { useState } from 'react';
 import { Mail, ArrowLeft, RotateCcw, CheckCircle } from 'lucide-react';
-import { supabase } from '../../lib/supabase';
+import { useAuth } from '../../hooks/useAuth';
 
 interface PasswordResetProps {
   onNavigate: (view: string) => void;
@@ -8,30 +8,20 @@ interface PasswordResetProps {
 
 function PasswordReset({ onNavigate }: PasswordResetProps) {
   const [email, setEmail] = useState('');
-  const [isLoading, setIsLoading] = useState(false);
   const [isSuccess, setIsSuccess] = useState(false);
+  const { resetPassword, loading } = useAuth();
   const [error, setError] = useState('');
 
   const handlePasswordReset = async (e: React.FormEvent) => {
     e.preventDefault();
-    setIsLoading(true);
     setError('');
 
-    try {
-      const { error } = await supabase.auth.resetPasswordForEmail(email, {
-        redirectTo: `${import.meta.env.VITE_SITE_URL || import.meta.env.NEXT_PUBLIC_SITE_URL || window.location.origin}/#/password-reset-confirm`,
-      });
-
-      if (error) {
-        setError(error.message);
-        return;
-      }
-
+    const result = await resetPassword(email);
+    
+    if (result.success) {
       setIsSuccess(true);
-    } catch (err) {
-      setError('パスワードリセットに失敗しました。もう一度お試しください。');
-    } finally {
-      setIsLoading(false);
+    } else {
+      setError(result.error || 'パスワードリセットに失敗しました。もう一度お試しください。');
     }
   };
 
@@ -147,11 +137,11 @@ function PasswordReset({ onNavigate }: PasswordResetProps) {
 
               <button
                 type="submit"
-                disabled={isLoading}
+                disabled={loading}
                 className="w-full flex items-center justify-center space-x-2 px-6 py-3 bg-gradient-to-r from-amber-600 to-amber-800 hover:from-amber-700 hover:to-amber-900 text-white rounded-lg font-medium shadow-xl hover:shadow-2xl transition-all duration-200 transform hover:scale-105 disabled:opacity-50 disabled:cursor-not-allowed"
               >
                 <RotateCcw className="w-5 h-5" />
-                <span>{isLoading ? '送信中...' : 'リセットメールを送信'}</span>
+                <span>{loading ? '送信中...' : 'リセットメールを送信'}</span>
               </button>
             </form>
 

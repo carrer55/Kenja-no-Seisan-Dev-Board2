@@ -1,7 +1,7 @@
 import { createClient } from '@supabase/supabase-js'
 
-const supabaseUrl = import.meta.env.NEXT_PUBLIC_SUPABASE_URL || import.meta.env.VITE_SUPABASE_URL
-const supabaseAnonKey = import.meta.env.NEXT_PUBLIC_SUPABASE_ANON_KEY || import.meta.env.VITE_SUPABASE_ANON_KEY
+const supabaseUrl = import.meta.env.VITE_SUPABASE_URL
+const supabaseAnonKey = import.meta.env.VITE_SUPABASE_ANON_KEY
 
 if (!supabaseUrl || !supabaseAnonKey) {
   throw new Error('Missing Supabase environment variables')
@@ -12,50 +12,58 @@ export const supabase = createClient(supabaseUrl, supabaseAnonKey, {
     autoRefreshToken: true,
     persistSession: true,
     detectSessionInUrl: true,
-    flowType: 'pkce'
+    flowType: 'pkce',
+    storage: window.localStorage,
+    storageKey: 'kenja-seisan-auth'
   }
 })
 
-// Database types - Updated for new schema
+// Database types - 最新スキーマに対応
 export type Database = {
   public: {
     Tables: {
-      profiles: {
+      user_profiles: {
         Row: {
           id: string
+          email: string
           full_name: string | null
           company_name: string | null
           phone: string | null
           position: string | null
           department: string | null
           role: string | null
-          default_org_id: string | null
+          default_organization_id: string | null
+          avatar_url: string | null
           onboarding_completed: boolean | null
           created_at: string | null
           updated_at: string | null
         }
         Insert: {
           id: string
+          email: string
           full_name?: string | null
           company_name?: string | null
           phone?: string | null
           position?: string | null
           department?: string | null
           role?: string | null
-          default_org_id?: string | null
+          default_organization_id?: string | null
+          avatar_url?: string | null
           onboarding_completed?: boolean | null
           created_at?: string | null
           updated_at?: string | null
         }
         Update: {
           id?: string
+          email?: string
           full_name?: string | null
           company_name?: string | null
           phone?: string | null
           position?: string | null
           department?: string | null
           role?: string | null
-          default_org_id?: string | null
+          default_organization_id?: string | null
+          avatar_url?: string | null
           onboarding_completed?: boolean | null
           created_at?: string | null
           updated_at?: string | null
@@ -321,20 +329,48 @@ export type Database = {
           created_at?: string
         }
       }
+      user_sessions: {
+        Row: {
+          id: string
+          user_id: string
+          session_token: string
+          expires_at: string
+          created_at: string
+          updated_at: string
+        }
+        Insert: {
+          id?: string
+          user_id: string
+          session_token: string
+          expires_at: string
+          created_at?: string
+          updated_at?: string
+        }
+        Update: {
+          id?: string
+          user_id?: string
+          session_token?: string
+          expires_at?: string
+          created_at?: string
+          updated_at?: string
+        }
+      }
     }
   }
 }
 
-// 型定義
-export interface Profile {
+// 型定義 - 更新
+export interface UserProfile {
   id: string
+  email: string
   full_name: string | null
   company_name: string | null
   phone: string | null
   position: string | null
   department: string | null
   role: string | null
-  default_org_id: string | null
+  default_organization_id: string | null
+  avatar_url: string | null
   onboarding_completed: boolean | null
   created_at: string
   updated_at: string
@@ -374,3 +410,51 @@ export interface AuthUser {
   email_confirmed_at: string | null
   created_at: string
 }
+// 認証関連のヘルパー関数
+export const getCurrentUser = async () => {
+  const { data: { user } } = await supabase.auth.getUser();
+  return user;
+};
+
+export const getCurrentUserProfile = async () => {
+  const user = await getCurrentUser();
+  if (!user) return null;
+
+  const { data: profile, error } = await supabase
+    .from('user_profiles')
+    .select('*')
+    .eq('id', user.id)
+    .single();
+
+  if (error) {
+    console.error('Profile fetch error:', error);
+    return null;
+  }
+
+  return profile;
+};
+
+export const updateUserProfile = async (updates: Partial<UserProfile>) => {
+  const user = await getCurrentUser();
+  if (!user) throw new Error('User not authenticated');
+
+  const { data, error } = await supabase
+    .from('user_profiles')
+    .update(updates)
+    .eq('id', user.id)
+    .select()
+    .single();
+
+  if (error) throw error;
+  return data;
+};
+
+export const signOut = async () => {
+  const { error } = await supabase.auth.signOut();
+  if (error) throw error;
+  
+  // ローカルストレージのクリア
+  localStorage.removeItem('userProfile');
+  localStorage.removeItem('demoMode');
+  localStorage.removeItem('demoSession');
+};

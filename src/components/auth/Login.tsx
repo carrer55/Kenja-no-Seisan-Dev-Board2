@@ -1,6 +1,6 @@
 import React, { useState } from 'react';
 import { Mail, Lock, Eye, EyeOff, LogIn, UserPlus, RotateCcw } from 'lucide-react';
-import { supabase } from '../../lib/supabase';
+import { useAuth } from '../../hooks/useAuth';
 
 interface LoginProps {
   onNavigate: (view: string) => void;
@@ -11,13 +11,10 @@ function Login({ onNavigate, onLoginSuccess }: LoginProps) {
   const [email, setEmail] = useState('');
   const [password, setPassword] = useState('');
   const [showPassword, setShowPassword] = useState(false);
-  const [isLoading, setIsLoading] = useState(false);
-  const [error, setError] = useState('');
+  const { signIn, loading, error } = useAuth();
 
   const handleLogin = async (e: React.FormEvent) => {
     e.preventDefault();
-    setIsLoading(true);
-    setError('');
 
     // デモアカウントの処理
     if (email === 'demo' && password === 'pass9981') {
@@ -25,12 +22,18 @@ function Login({ onNavigate, onLoginSuccess }: LoginProps) {
         // デモユーザーのプロフィール情報をローカルストレージに設定
         const demoProfile = {
           id: 'demo-user-id',
+          email: 'demo',
           full_name: 'デモユーザー',
           company_name: '株式会社デモ',
           position: '代表取締役',
           phone: '090-0000-0000',
+          department: '経営企画部',
+          role: 'admin',
+          default_organization_id: null,
+          avatar_url: null,
           onboarding_completed: true,
-          role: 'admin'
+          created_at: new Date().toISOString(),
+          updated_at: new Date().toISOString()
         };
         
         localStorage.setItem('userProfile', JSON.stringify(demoProfile));
@@ -49,61 +52,19 @@ function Login({ onNavigate, onLoginSuccess }: LoginProps) {
         
         // ログイン成功
         onLoginSuccess();
+        window.location.reload(); // デモモードの場合はリロードして状態を更新
         return;
       } catch (err) {
-        setError('デモアカウントのログインに失敗しました。');
-        setIsLoading(false);
+        console.error('Demo login error:', err);
         return;
       }
     }
 
-    try {
-      const { data, error } = await supabase.auth.signInWithPassword({
-        email,
-        password,
-      });
-
-      if (error) {
-        setError(error.message);
-        return;
-      }
-
-      if (data.user) {
-        if (data.user.email_confirmed_at) {
-          // プロフィール情報を確認
-          const { data: profile, error: profileError } = await supabase
-            .from('profiles')
-            .select('*')
-            .eq('id', data.user.id)
-            .single();
-
-          if (profileError || !profile) {
-            // プロフィールが存在しない場合は作成
-            const { error: insertError } = await supabase
-              .from('profiles')
-              .insert({
-                id: data.user.id,
-                onboarding_completed: false
-              });
-            
-            if (!insertError) {
-              onNavigate('onboarding');
-            }
-          } else if (!profile.onboarding_completed) {
-            // 本登録が未完了の場合
-            onNavigate('onboarding');
-          } else {
-            // ログイン成功
-            onLoginSuccess();
-          }
-        } else {
-          setError('メールアドレスの確認が完了していません。確認メールをご確認ください。');
-        }
-      }
-    } catch (err) {
-      setError('ログインに失敗しました。もう一度お試しください。');
-    } finally {
-      setIsLoading(false);
+    // 通常のログイン処理
+    const result = await signIn(email, password);
+    
+    if (result.success) {
+      onLoginSuccess();
     }
   };
 
@@ -178,11 +139,11 @@ function Login({ onNavigate, onLoginSuccess }: LoginProps) {
 
               <button
                 type="submit"
-                disabled={isLoading}
+                disabled={loading}
                 className="w-full flex items-center justify-center space-x-2 px-6 py-3 bg-gradient-to-r from-navy-600 to-navy-800 hover:from-navy-700 hover:to-navy-900 text-white rounded-lg font-medium shadow-xl hover:shadow-2xl transition-all duration-200 transform hover:scale-105 disabled:opacity-50 disabled:cursor-not-allowed"
               >
                 <LogIn className="w-5 h-5" />
-                <span>{isLoading ? 'ログイン中...' : 'ログイン'}</span>
+                <span>{loading ? 'ログイン中...' : 'ログイン'}</span>
               </button>
             </form>
 
