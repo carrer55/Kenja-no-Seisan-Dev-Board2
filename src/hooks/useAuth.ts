@@ -173,6 +173,7 @@ export function useAuth() {
   };
 
   const signUp = async (email: string, password: string) => {
+  }
   const signUp = async (email: string, password: string, profileData?: {
     full_name: string;
     company_name: string;
